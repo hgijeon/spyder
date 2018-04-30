@@ -636,6 +636,16 @@ def get_remote_data(data, settings, mode, more_excluded_names=None):
                          exclude_unsupported=settings['exclude_unsupported'],
                          excluded_names=excluded_names)
 
+conversion = {
+    'Tensor': (lambda data: data.numpy())
+}
+def to_supported_type(data):
+    t = get_human_readable_type(data)
+    conversion_func = conversion.get(t, None)
+    if conversion_func is not None:
+        return conversion_func(data)
+    return data
+
 
 def make_remote_view(data, settings, more_excluded_names=None):
     """
@@ -646,9 +656,14 @@ def make_remote_view(data, settings, more_excluded_names=None):
                            more_excluded_names=more_excluded_names)
     remote = {}
     for key, value in list(data.items()):
-        view = value_to_display(value, minmax=settings['minmax'])
-        remote[key] = {'type':  get_human_readable_type(value),
-                       'size':  get_size(value),
-                       'color': get_color_name(value),
+        supported_type_value = to_supported_type(value)
+        view = value_to_display(supported_type_value, minmax=settings['minmax'])
+
+        type_string = get_human_readable_type(supported_type_value)
+        if value is not supported_type_value:
+            type_string += '(from %s)' % get_human_readable_type(value)
+        remote[key] = {'type':  type_string,
+                       'size':  get_size(supported_type_value),
+                       'color': get_color_name(supported_type_value),
                        'view':  view}
     return remote

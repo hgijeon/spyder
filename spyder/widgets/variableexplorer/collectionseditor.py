@@ -1407,7 +1407,8 @@ class RemoteCollectionsDelegate(CollectionsDelegate):
     def get_value(self, index):
         if index.isValid():
             name = index.model().keys[index.row()]
-            return self.parent().get_value(name)
+            from spyder.widgets.variableexplorer.utils import to_supported_type
+            return to_supported_type(self.parent().get_value(name))
     
     def set_value(self, index, value):
         if index.isValid():
